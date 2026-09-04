@@ -1,0 +1,46 @@
+@Exertly.Api_HostAddress = http://localhost:5219
+
+GET {{Exertly.Api_HostAddress}}/api/jobs
+Accept: application/json
+
+###
+
+GET {{Exertly.Api_HostAddress}}/api/jobs/1
+Accept: application/json
+
+###
+
+POST {{Exertly.Api_HostAddress}}/api/jobs/1/save
+Accept: application/json
+
+###
+
+GET {{Exertly.Api_HostAddress}}/api/educational-opportunities
+Accept: application/json
+
+###
+
+POST {{Exertly.Api_HostAddress}}/api/educational-opportunities/1/apply
+Accept: application/json
+
+###
+
+GET {{Exertly.Api_HostAddress}}/api/resume/profile
+Accept: application/json
+
+###
+
+GET {{Exertly.Api_HostAddress}}/api/resume/templates
+Accept: application/json
+
+###
+
+POST {{Exertly.Api_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "john.doe@exertly.io",
+  "password": "password123"
+}
+
+###

@@ -1,0 +1,45 @@
+## .NET Core / .NET (Visual Studio, VS Code, Rider)
+
+# Build results
+[Bb]in/
+[Oo]bj/
+[Oo]ut/
+artifacts/
+
+# User-specific files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# IDE folders
+.vs/
+.vscode/
+.idea/
+*.swp
+
+# Rider
+*.sln.iml
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+
+# NuGet
+*.nupkg
+*.snupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+project.lock.json
+project.fragment.lock.json
+
+# ASP.NET Core secrets / local overrides
+appsettings.*.local.json
+secrets.json
+*.pfx
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
