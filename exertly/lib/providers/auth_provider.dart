@@ -3,28 +3,28 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../services/api/user_avatar_api_service.dart';
 import '../services/supabase/avatar_service.dart';
 import '../services/supabase/supabase_config.dart';
-
-/// Table holding each user's current avatar URL: columns `user_id` and
-/// `avatar_url` (the public URL of the file stored in the `avatars` bucket).
-const String _userAvatarsTable = 'user_avatars';
 
 /// Wraps Supabase Auth: email/password sign-in and sign-up, plus Google/Apple
 /// OAuth (redirect flow). Until the Google/Apple providers are configured in
 /// the Supabase dashboard, those specific calls will reach Supabase but the
 /// provider redirect itself will fail server-side.
 ///
-/// Also owns the signed-in user's avatar as reactive state, backed by the
-/// `user_avatars` table and the `avatars` storage bucket (see [AvatarService]).
+/// Also owns the signed-in user's avatar as reactive state, backed by
+/// Exertly.Api's `/api/user-avatars` endpoints and the `avatars` storage
+/// bucket (see [UserAvatarApiService] and [AvatarService]).
 class AuthProvider extends ChangeNotifier {
   final SupabaseClient _client;
   final AvatarService _avatarService;
+  final UserAvatarApiService _userAvatarApi;
   late final StreamSubscription<AuthState> _authSub;
 
-  AuthProvider({SupabaseClient? client, AvatarService? avatarService})
+  AuthProvider({SupabaseClient? client, AvatarService? avatarService, UserAvatarApiService? userAvatarApi})
       : _client = client ?? Supabase.instance.client,
-        _avatarService = avatarService ?? AvatarService() {
+        _avatarService = avatarService ?? AvatarService(),
+        _userAvatarApi = userAvatarApi ?? UserAvatarApiService() {
     _authSub = _client.auth.onAuthStateChange.listen((_) {
       notifyListeners();
       _refreshAvatarUrl();
@@ -42,7 +42,7 @@ class AuthProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
-  /// Reloads the signed-in user's avatar URL from the `user_avatars` table.
+  /// Reloads the signed-in user's avatar URL via [UserAvatarApiService].
   Future<void> _refreshAvatarUrl() async {
     final userId = _client.auth.currentUser?.id;
     if (userId == null) {
@@ -53,8 +53,8 @@ class AuthProvider extends ChangeNotifier {
       return;
     }
     try {
-      final row = await _client.from(_userAvatarsTable).select('avatar_url').eq('user_id', userId).maybeSingle();
-      _avatarUrl = row?['avatar_url'] as String?;
+      final avatar = await _userAvatarApi.getAvatar();
+      _avatarUrl = avatar?.avatarUrl;
     } catch (_) {
       // Keep whatever avatar is already cached if the fetch fails.
     }
@@ -165,8 +165,10 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  /// Persists the uploaded avatar's public URL as the user's row in
-  /// `user_avatars` (insert or replace, keyed by `user_id`).
+  
+
+  /// Persists the uploaded avatar's public URL via [UserAvatarApiService]
+  /// (insert or replace, keyed by user id).
   Future<bool> updateAvatarUrl(String url) async {
     final userId = _client.auth.currentUser?.id;
     if (userId == null) {
@@ -175,8 +177,7 @@ class AuthProvider extends ChangeNotifier {
       return false;
     }
     try {
-      await _client.from(_userAvatarsTable).upsert({'user_id': userId, 'avatar_url': url}, onConflict: 'user_id');
-      _avatarUrl = url;
+      await _userAvatarApi.upsertAvatar(url);
       notifyListeners();
       return true;
     } catch (e) {
@@ -186,13 +187,13 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  /// Deletes the user's avatar file(s) from storage and its `user_avatars` row.
+  /// Deletes the user's avatar file(s) from storage and its avatar row.
   Future<bool> deleteAvatar() async {
     final userId = _client.auth.currentUser?.id;
     if (userId == null) return false;
     try {
-      await _avatarService.deleteStoredFiles();
-      await _client.from(_userAvatarsTable).delete().eq('user_id', userId);
+      await _avatarService.deleteStoredUserFiles();
+      await _userAvatarApi.deleteAvatar();
       _avatarUrl = null;
       notifyListeners();
       return true;

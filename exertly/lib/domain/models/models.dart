@@ -7,6 +7,8 @@ class JobListing {
   final String salaryRange;
   final String type;
   final List<String> tags;
+  final String details;
+  final String postingLink;
 
   const JobListing({
     required this.id,
@@ -17,6 +19,8 @@ class JobListing {
     required this.salaryRange,
     required this.type,
     required this.tags,
+    this.details = '',
+    this.postingLink = '',
   });
 
   factory JobListing.fromJson(Map<String, dynamic> json) {
@@ -29,6 +33,8 @@ class JobListing {
       salaryRange: json['salaryRange'] as String,
       type: json['type'] as String,
       tags: (json['tags'] as List<dynamic>? ?? []).cast<String>(),
+      details: json['details'] as String? ?? '',
+      postingLink: json['postingLink'] as String? ?? '',
     );
   }
 }
@@ -40,6 +46,8 @@ class Scholarship {
   final String amount;
   final String deadline;
   final String category;
+  final String details;
+  final String postingLink;
 
   const Scholarship({
     required this.id,
@@ -48,6 +56,8 @@ class Scholarship {
     required this.amount,
     required this.deadline,
     required this.category,
+    this.details = '',
+    this.postingLink = '',
   });
 
   factory Scholarship.fromJson(Map<String, dynamic> json) {
@@ -58,6 +68,8 @@ class Scholarship {
       amount: json['amount'] as String,
       deadline: json['deadline'] as String,
       category: json['category'] as String,
+      details: json['details'] as String? ?? '',
+      postingLink: json['postingLink'] as String? ?? '',
     );
   }
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../domain/models/models.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/dashboard_provider.dart';
 import '../widgets/auth_bottom_sheet.dart';
@@ -247,24 +249,50 @@ class _ScholarshipFinderScreenState extends State<ScholarshipFinderScreen> {
                                   ),
                                 ],
                               ),
+                              if (scholarship.details.isNotEmpty) ...[
+                                const SizedBox(height: 12),
+                                Text(
+                                  scholarship.details,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(fontSize: 12.5, color: Color(0xFF64748B), height: 1.4),
+                                ),
+                              ],
                               const SizedBox(height: 16),
                               const Divider(color: Color(0xFFE2E8F0)),
                               const SizedBox(height: 16),
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
                                   // Category Tag
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                    decoration: BoxDecoration(
-                                      color: theme.scaffoldBackgroundColor,
-                                      borderRadius: BorderRadius.circular(30),
-                                    ),
-                                    child: Text(
-                                      scholarship.category,
-                                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF64748B)),
+                                  Expanded(
+                                    child: Align(
+                                      alignment: Alignment.centerLeft,
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                        decoration: BoxDecoration(
+                                          color: theme.scaffoldBackgroundColor,
+                                          borderRadius: BorderRadius.circular(30),
+                                        ),
+                                        child: Text(
+                                          scholarship.category,
+                                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF64748B)),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
                                     ),
                                   ),
+                                  const SizedBox(width: 8),
+                                  // Details Button
+                                  OutlinedButton(
+                                    onPressed: () => _showDetailsDialog(context, scholarship),
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: colorScheme.primary,
+                                      side: BorderSide(color: colorScheme.primary.withOpacity(0.3)),
+                                    ),
+                                    child: const Text('Details'),
+                                  ),
+                                  const SizedBox(width: 8),
                                   // Toggle Applied
                                   ElevatedButton(
                                     onPressed: () {
@@ -313,6 +341,80 @@ class _ScholarshipFinderScreenState extends State<ScholarshipFinderScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Future<void> _openPostingLink(BuildContext context, String url) async {
+    final uri = Uri.tryParse(url);
+    if (uri == null || !await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not open the posting link.')),
+      );
+    }
+  }
+
+  void _showDetailsDialog(BuildContext context, Scholarship scholarship) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(
+            scholarship.title,
+            style: TextStyle(fontWeight: FontWeight.bold, color: colorScheme.primary),
+          ),
+          content: SizedBox(
+            width: 480,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${scholarship.institution} · ${scholarship.amount}',
+                    style: TextStyle(
+                      color: colorScheme.secondary,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Deadline: ${scholarship.deadline}',
+                    style: const TextStyle(color: Color(0xFF64748B), fontSize: 12, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    scholarship.details.isNotEmpty
+                        ? scholarship.details
+                        : 'No further details are available for this opportunity.',
+                    style: const TextStyle(fontSize: 13, color: Color(0xFF334155), height: 1.5),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Close', style: TextStyle(color: Color(0xFF64748B))),
+            ),
+            if (scholarship.postingLink.isNotEmpty)
+              ElevatedButton.icon(
+                onPressed: () => _openPostingLink(context, scholarship.postingLink),
+                icon: const Icon(Icons.open_in_new_rounded, size: 16),
+                label: const Text('View Original Posting'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: colorScheme.primary,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 

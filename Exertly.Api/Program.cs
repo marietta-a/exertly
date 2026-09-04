@@ -1,7 +1,11 @@
 using Exertly.Api.Data;
 using Exertly.Api.Endpoints;
+using Exertly.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Local, gitignored overrides (Supabase URL/anon key) — see appsettings.Development.local.json.example.
+builder.Configuration.AddJsonFile("appsettings.Development.local.json", optional: true, reloadOnChange: true);
 
 builder.Services.AddOpenApi();
 
@@ -9,6 +13,10 @@ builder.Services.AddOpenApi();
 builder.Services.AddSingleton<JobStore>();
 builder.Services.AddSingleton<EducationalOpportunityStore>();
 builder.Services.AddSingleton<ResumeStore>();
+
+builder.Services.Configure<SupabaseOptions>(builder.Configuration.GetSection("Supabase"));
+builder.Services.AddHttpClient<SupabaseStorageClient>();
+builder.Services.AddHttpClient<SupabaseUserAvatarsClient>();
 
 const string CorsPolicy = "ExertlyClient";
 builder.Services.AddCors(options =>
@@ -35,6 +43,8 @@ app.MapJobEndpoints();
 app.MapEducationalOpportunityEndpoints();
 app.MapResumeEndpoints();
 app.MapAuthEndpoints();
+app.MapStorageEndpoints();
+app.MapUserAvatarEndpoints();
 
 app.MapGet("/", () => Results.Ok(new { service = "Exertly API", status = "running" }))
     .ExcludeFromDescription();

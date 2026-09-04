@@ -3,24 +3,24 @@ import 'dart:typed_data';
 import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
 
+import '../api/storage_api_service.dart';
 import 'supabase_config.dart';
-import 'supabase_storage_service.dart';
 
 /// Picks, validates, compresses and uploads a user's profile photo to the
-/// `avatars` Supabase Storage bucket. Persisting the resulting URL to the
-/// `user_avatars` table is handled by AuthProvider, which owns the user's
-/// avatar as reactive state.
+/// `avatars` Supabase Storage bucket via Exertly.Api. Persisting the
+/// resulting URL to the `user_avatars` table is handled by AuthProvider,
+/// which owns the user's avatar as reactive state.
 class AvatarService {
   static const _allowedExtensions = {'jpg', 'jpeg', 'png'};
   static const _maxDimension = 512;
   static const _jpegQuality = 80;
 
   final ImagePicker _picker;
-  final SupabaseStorageService _storage;
+  final StorageApiService _storage;
 
-  AvatarService({ImagePicker? picker, SupabaseStorageService? storage})
+  AvatarService({ImagePicker? picker, StorageApiService? storage})
       : _picker = picker ?? ImagePicker(),
-        _storage = storage ?? SupabaseStorageService();
+        _storage = storage ?? StorageApiService();
 
   Future<XFile?> pickAvatarImage() {
     return _picker.pickImage(source: ImageSource.gallery);
@@ -46,7 +46,7 @@ class AvatarService {
     final original = await file.readAsBytes();
     final compressed = _compress(original);
 
-    await _storage.deleteAllUserFiles(SupabaseConfig.avatarsBucket);
+    await deleteStoredUserFiles();
 
     final fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
     final path = await _storage.uploadFile(
@@ -59,11 +59,15 @@ class AvatarService {
       throw StateError('You must be signed in to upload an avatar.');
     }
 
-    return _storage.getPublicUrl(bucket: SupabaseConfig.avatarsBucket, path: path);
+    final url = await _storage.getPublicUrl(bucket: SupabaseConfig.avatarsBucket, path: path);
+    if (url.isEmpty) {
+      throw StateError('Unable to resolve the uploaded avatar\'s URL.');
+    }
+    return url;
   }
 
   /// Deletes the current user's avatar file(s) from the bucket.
-  Future<void> deleteStoredFiles() {
+  Future<void> deleteStoredUserFiles() {
     return _storage.deleteAllUserFiles(SupabaseConfig.avatarsBucket);
   }
 

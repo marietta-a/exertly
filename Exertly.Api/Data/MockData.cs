@@ -18,6 +18,8 @@ public static class MockData
             SalaryRange = "$160k - $210k",
             Type = "Full-time",
             Tags = ["Flutter", "API Design", "Dart"],
+            Details = "Join Stripe's Platform team to design and build the APIs and SDKs that power payments for millions of businesses worldwide. You'll work closely with product and infrastructure teams to ship reliable, well-documented interfaces used by developers everywhere.",
+            PostingLink = "https://stripe.com/jobs/listing/senior-software-engineer",
         },
         new JobListing
         {
@@ -29,6 +31,8 @@ public static class MockData
             SalaryRange = "$120k - $150k",
             Type = "Full-time",
             Tags = ["Growth", "SEO", "Analytics"],
+            Details = "Own the growth strategy for a key Airbnb market segment. You'll run experiments across acquisition channels, partner with data science to build attribution models, and drive SEO initiatives that scale organic traffic.",
+            PostingLink = "https://careers.airbnb.com/positions/growth-marketing-manager",
         },
         new JobListing
         {
@@ -40,6 +44,8 @@ public static class MockData
             SalaryRange = "£90k - £110k",
             Type = "Contract",
             Tags = ["UI/UX", "Figma", "Prototyping"],
+            Details = "Shape the next generation of Figma's design tools. You'll partner with engineers and researchers to prototype, test, and ship features used by millions of designers, from early concept sketches to polished, production-ready flows.",
+            PostingLink = "https://www.figma.com/careers/roles/product-designer",
         },
         new JobListing
         {
@@ -51,6 +57,8 @@ public static class MockData
             SalaryRange = "$150k - $190k",
             Type = "Full-time",
             Tags = ["SQL", "Python", "Machine Learning"],
+            Details = "Build predictive models and analytics pipelines on top of the Snowflake platform. You'll partner with product teams to surface insights from massive datasets and help drive data-informed decisions across the company.",
+            PostingLink = "https://careers.snowflake.com/us/en/job/data-scientist",
         },
         new JobListing
         {
@@ -62,6 +70,8 @@ public static class MockData
             SalaryRange = "CA$130k - CA$165k",
             Type = "Full-time",
             Tags = ["Ruby", "SQL", "API Design"],
+            Details = "Help build and scale the payments infrastructure that powers checkout for over a million merchants. You'll design resilient APIs, optimize transaction throughput, and ensure every payment is processed safely and reliably.",
+            PostingLink = "https://www.shopify.com/careers/backend-engineer-payments",
         },
         new JobListing
         {
@@ -73,6 +83,8 @@ public static class MockData
             SalaryRange = "$140k - $175k",
             Type = "Full-time",
             Tags = ["Flutter", "Dart", "Mobile"],
+            Details = "Build delightful, high-performance learning experiences for Duolingo's mobile apps using Flutter. You'll collaborate with designers and learning scientists to ship features that keep millions of learners coming back every day.",
+            PostingLink = "https://careers.duolingo.com/jobs/mobile-engineer-flutter",
         },
     ];
 
@@ -86,6 +98,8 @@ public static class MockData
             Amount = "$65,000 / Year",
             Deadline = "Oct 15, 2026",
             Category = "Business / Leadership",
+            Details = "Awarded to incoming MBA candidates who demonstrate exceptional leadership potential and a track record of driving impact in their communities or workplaces. Covers tuition, and recipients join a mentorship cohort with Stanford GSB alumni.",
+            PostingLink = "https://www.gsb.stanford.edu/programs/mba/financial-aid/fellowships",
         },
         new EducationalOpportunity
         {
@@ -95,6 +109,8 @@ public static class MockData
             Amount = "$45,000",
             Deadline = "Nov 01, 2026",
             Category = "Technology / STEM",
+            Details = "Supports graduate researchers pursuing original work in engineering or applied sciences. Grant funds cover research materials, conference travel, and a stipend for up to one year, with priority given to projects addressing sustainability or accessibility.",
+            PostingLink = "https://engineering.mit.edu/research/graduate-funding",
         },
         new EducationalOpportunity
         {
@@ -104,6 +120,8 @@ public static class MockData
             Amount = "Full Tuition + Stipend",
             Deadline = "Jan 10, 2027",
             Category = "Multidisciplinary",
+            Details = "A fully-funded, multidisciplinary graduate fellowship for future global leaders across any Stanford graduate program. Scholars join a three-year leadership development experience alongside a diverse, interdisciplinary cohort.",
+            PostingLink = "https://knight-hennessy.stanford.edu/apply",
         },
         new EducationalOpportunity
         {
@@ -113,6 +131,8 @@ public static class MockData
             Amount = "€24,000 / Year",
             Deadline = "Feb 15, 2027",
             Category = "All Fields / Europe",
+            Details = "Fully-funded scholarship for students admitted to an Erasmus Mundus Joint Master Degree, covering tuition, travel, installation, and a monthly living allowance while studying across two or more European universities.",
+            PostingLink = "https://ec.europa.eu/programmes/erasmus-plus/opportunities/individuals/students/erasmus-mundus-joint-master-degrees_en",
         },
         new EducationalOpportunity
         {
@@ -122,6 +142,8 @@ public static class MockData
             Amount = "$30,000",
             Deadline = "Dec 05, 2026",
             Category = "Technology / STEM",
+            Details = "Supports women pursuing graduate studies in data science, statistics, or machine learning. Fellows receive funding, a faculty mentor, and access to CMU's data science industry partner network for internships and research collaborations.",
+            PostingLink = "https://www.cmu.edu/graduate/funding/women-in-data-science-fellowship",
         },
         new EducationalOpportunity
         {
@@ -131,6 +153,8 @@ public static class MockData
             Amount = "CHF 40,000",
             Deadline = "Mar 20, 2027",
             Category = "Multidisciplinary / Europe",
+            Details = "Funds postgraduate researchers developing innovative, high-impact projects across science and engineering disciplines. Includes access to ETH Zurich's labs and an annual innovation showcase with European industry partners.",
+            PostingLink = "https://ethz.ch/en/studies/financial/scholarships/innovation-grant.html",
         },
     ];
 

@@ -9,4 +9,10 @@ public class EducationalOpportunity
     public required string Amount { get; set; }
     public required string Deadline { get; set; }
     public required string Category { get; set; }
+
+    // Full opportunity description shown in the detail view
+    public string Details { get; set; } = "";
+
+    // External URL to the original scholarship/grant posting
+    public string PostingLink { get; set; } = "";
 }

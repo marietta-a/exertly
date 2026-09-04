@@ -12,4 +12,10 @@ public class JobListing
     public required string SalaryRange { get; set; }
     public required string Type { get; set; }
     public List<string> Tags { get; set; } = [];
+
+    // Full role description shown in the job detail view
+    public string Details { get; set; } = "";
+
+    // External URL to the original job posting
+    public string PostingLink { get; set; } = "";
 }

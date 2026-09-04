@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../core/api/api_endpoints.dart';
 import '../domain/models/models.dart';
 import '../services/api/api_client.dart';
 
@@ -65,10 +66,10 @@ class DashboardProvider extends ChangeNotifier {
     jobsError = null;
     notifyListeners();
     try {
-      final jobsJson = await _api.get('/api/jobs') as List<dynamic>;
+      final jobsJson = await _api.get(ApiEndpoints.jobs) as List<dynamic>;
       _jobs = jobsJson.map((e) => JobListing.fromJson(e as Map<String, dynamic>)).toList();
 
-      final savedJson = await _api.get('/api/jobs/saved') as List<dynamic>;
+      final savedJson = await _api.get(ApiEndpoints.savedJobs) as List<dynamic>;
       _savedJobs
         ..clear()
         ..addAll(savedJson.map((e) => (e as Map<String, dynamic>)['id'] as String));
@@ -85,10 +86,10 @@ class DashboardProvider extends ChangeNotifier {
     scholarshipsError = null;
     notifyListeners();
     try {
-      final oppsJson = await _api.get('/api/educational-opportunities') as List<dynamic>;
+      final oppsJson = await _api.get(ApiEndpoints.educationalOpportunities) as List<dynamic>;
       _scholarships = oppsJson.map((e) => Scholarship.fromJson(e as Map<String, dynamic>)).toList();
 
-      final appliedJson = await _api.get('/api/educational-opportunities/applied') as List<dynamic>;
+      final appliedJson = await _api.get(ApiEndpoints.appliedEducationalOpportunities) as List<dynamic>;
       _appliedScholarships
         ..clear()
         ..addAll(appliedJson.map((e) => (e as Map<String, dynamic>)['id'] as String));
@@ -106,10 +107,10 @@ class DashboardProvider extends ChangeNotifier {
     notifyListeners();
     try {
       final results = await Future.wait([
-        _api.get('/api/resume/templates'),
-        _api.get('/api/resume/profile'),
-        _api.get('/api/resume/experience'),
-        _api.get('/api/resume/sections'),
+        _api.get(ApiEndpoints.resumeTemplates),
+        _api.get(ApiEndpoints.resumeProfile),
+        _api.get(ApiEndpoints.resumeExperience),
+        _api.get(ApiEndpoints.resumeSections),
       ]);
 
       _templates = (results[0] as List<dynamic>)
@@ -162,7 +163,7 @@ class DashboardProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final response = await _api.put('/api/resume/profile', body: {
+      final response = await _api.put(ApiEndpoints.resumeProfile, body: {
         'name': name,
         'title': title,
         'email': email,
@@ -182,7 +183,7 @@ class DashboardProvider extends ChangeNotifier {
     _resumeSkills.add(trimmed);
     notifyListeners();
     try {
-      final response = await _api.post('/api/resume/skills', body: {'skill': trimmed}) as Map<String, dynamic>;
+      final response = await _api.post(ApiEndpoints.resumeSkills, body: {'skill': trimmed}) as Map<String, dynamic>;
       _applyProfile(response);
       notifyListeners();
     } catch (_) {
@@ -195,7 +196,7 @@ class DashboardProvider extends ChangeNotifier {
     if (!_resumeSkills.remove(skill)) return;
     notifyListeners();
     try {
-      final response = await _api.delete('/api/resume/skills/${Uri.encodeComponent(skill)}') as Map<String, dynamic>;
+      final response = await _api.delete(ApiEndpoints.resumeSkill(skill)) as Map<String, dynamic>;
       _applyProfile(response);
       notifyListeners();
     } catch (_) {
@@ -210,7 +211,7 @@ class DashboardProvider extends ChangeNotifier {
     if (trimmedRole.isEmpty || trimmedCompany.isEmpty) return;
 
     try {
-      final response = await _api.post('/api/resume/experience', body: {
+      final response = await _api.post(ApiEndpoints.resumeExperience, body: {
         'role': trimmedRole,
         'company': trimmedCompany,
         'period': period.trim(),
@@ -228,7 +229,7 @@ class DashboardProvider extends ChangeNotifier {
     final removed = _resumeExperience.removeAt(index);
     notifyListeners();
     try {
-      await _api.delete('/api/resume/experience/$id');
+      await _api.delete(ApiEndpoints.resumeExperienceItem(id));
     } catch (_) {
       _resumeExperience.insert(index, removed);
       notifyListeners();
@@ -238,7 +239,7 @@ class DashboardProvider extends ChangeNotifier {
   Future<void> addResponsibilityToExperience(String expId, String responsibility) async {
     if (responsibility.trim().isEmpty) return;
     try {
-      final response = await _api.post('/api/resume/experience/$expId/responsibilities', body: {
+      final response = await _api.post(ApiEndpoints.resumeExperienceResponsibilities(expId), body: {
         'responsibility': responsibility.trim(),
       }) as List<dynamic>;
       _resumeExperience = response.map((e) => WorkExperience.fromJson(e as Map<String, dynamic>)).toList();
@@ -250,7 +251,8 @@ class DashboardProvider extends ChangeNotifier {
 
   Future<void> removeResponsibilityFromExperience(String expId, int respIndex) async {
     try {
-      final response = await _api.delete('/api/resume/experience/$expId/responsibilities/$respIndex') as List<dynamic>;
+      final response =
+          await _api.delete(ApiEndpoints.resumeExperienceResponsibility(expId, respIndex)) as List<dynamic>;
       _resumeExperience = response.map((e) => WorkExperience.fromJson(e as Map<String, dynamic>)).toList();
       notifyListeners();
     } catch (_) {
@@ -262,7 +264,7 @@ class DashboardProvider extends ChangeNotifier {
     final trimmed = title.trim();
     if (trimmed.isEmpty) return;
     try {
-      final response = await _api.post('/api/resume/sections', body: {'title': trimmed}) as Map<String, dynamic>;
+      final response = await _api.post(ApiEndpoints.resumeSections, body: {'title': trimmed}) as Map<String, dynamic>;
       _customSections.add(CustomSection.fromJson(response));
       notifyListeners();
     } catch (_) {
@@ -276,7 +278,7 @@ class DashboardProvider extends ChangeNotifier {
     final removed = _customSections.removeAt(index);
     notifyListeners();
     try {
-      await _api.delete('/api/resume/sections/$sectionId');
+      await _api.delete(ApiEndpoints.resumeSection(sectionId));
     } catch (_) {
       _customSections.insert(index, removed);
       notifyListeners();
@@ -286,7 +288,7 @@ class DashboardProvider extends ChangeNotifier {
   Future<void> addItemToSection(String sectionId, String item) async {
     if (item.trim().isEmpty) return;
     try {
-      final response = await _api.post('/api/resume/sections/$sectionId/items', body: {
+      final response = await _api.post(ApiEndpoints.resumeSectionItems(sectionId), body: {
         'item': item.trim(),
       }) as List<dynamic>;
       _customSections = response.map((e) => CustomSection.fromJson(e as Map<String, dynamic>)).toList();
@@ -298,7 +300,7 @@ class DashboardProvider extends ChangeNotifier {
 
   Future<void> removeItemFromSection(String sectionId, int itemIndex) async {
     try {
-      final response = await _api.delete('/api/resume/sections/$sectionId/items/$itemIndex') as List<dynamic>;
+      final response = await _api.delete(ApiEndpoints.resumeSectionItem(sectionId, itemIndex)) as List<dynamic>;
       _customSections = response.map((e) => CustomSection.fromJson(e as Map<String, dynamic>)).toList();
       notifyListeners();
     } catch (_) {
@@ -312,7 +314,7 @@ class DashboardProvider extends ChangeNotifier {
     _selectedTemplateIndex = index;
     notifyListeners();
     try {
-      final response = await _api.post('/api/resume/templates/select', body: {'index': index}) as Map<String, dynamic>;
+      final response = await _api.post(ApiEndpoints.selectResumeTemplate, body: {'index': index}) as Map<String, dynamic>;
       _applyProfile(response);
       notifyListeners();
     } catch (_) {
@@ -326,7 +328,7 @@ class DashboardProvider extends ChangeNotifier {
     wasSaved ? _savedJobs.remove(jobId) : _savedJobs.add(jobId);
     notifyListeners();
     try {
-      final response = await _api.post('/api/jobs/$jobId/save') as Map<String, dynamic>;
+      final response = await _api.post(ApiEndpoints.saveJob(jobId)) as Map<String, dynamic>;
       final saved = response['saved'] as bool? ?? !wasSaved;
       if (saved && !_savedJobs.contains(jobId)) _savedJobs.add(jobId);
       if (!saved) _savedJobs.remove(jobId);
@@ -340,7 +342,7 @@ class DashboardProvider extends ChangeNotifier {
   /// Calls POST /api/jobs/{id}/apply and returns the API's confirmation message.
   Future<String> applyToJob(String jobId) async {
     try {
-      final response = await _api.post('/api/jobs/$jobId/apply') as Map<String, dynamic>;
+      final response = await _api.post(ApiEndpoints.applyToJob(jobId)) as Map<String, dynamic>;
       return response['message'] as String? ?? 'Application submitted.';
     } on ApiException catch (e) {
       return 'Failed to apply: ${e.message}';
@@ -354,7 +356,7 @@ class DashboardProvider extends ChangeNotifier {
     wasApplied ? _appliedScholarships.remove(scholarshipId) : _appliedScholarships.add(scholarshipId);
     notifyListeners();
     try {
-      final response = await _api.post('/api/educational-opportunities/$scholarshipId/apply') as Map<String, dynamic>;
+      final response = await _api.post(ApiEndpoints.applyToEducationalOpportunity(scholarshipId)) as Map<String, dynamic>;
       final applied = response['applied'] as bool? ?? !wasApplied;
       if (applied && !_appliedScholarships.contains(scholarshipId)) _appliedScholarships.add(scholarshipId);
       if (!applied) _appliedScholarships.remove(scholarshipId);
