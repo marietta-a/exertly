@@ -16,7 +16,6 @@ builder.Services.AddSingleton<ResumeStore>();
 
 builder.Services.Configure<SupabaseOptions>(builder.Configuration.GetSection("Supabase"));
 builder.Services.AddHttpClient<SupabaseStorageClient>();
-builder.Services.AddHttpClient<SupabaseUserAvatarsClient>();
 
 const string CorsPolicy = "ExertlyClient";
 builder.Services.AddCors(options =>
@@ -44,7 +43,6 @@ app.MapEducationalOpportunityEndpoints();
 app.MapResumeEndpoints();
 app.MapAuthEndpoints();
 app.MapStorageEndpoints();
-app.MapUserAvatarEndpoints();
 
 app.MapGet("/", () => Results.Ok(new { service = "Exertly API", status = "running" }))
     .ExcludeFromDescription();

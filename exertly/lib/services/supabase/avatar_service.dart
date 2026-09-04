@@ -7,9 +7,10 @@ import '../api/storage_api_service.dart';
 import 'supabase_config.dart';
 
 /// Picks, validates, compresses and uploads a user's profile photo to the
-/// `avatars` Supabase Storage bucket via Exertly.Api. Persisting the
-/// resulting URL to the `user_avatars` table is handled by AuthProvider,
-/// which owns the user's avatar as reactive state.
+/// `avatars` Supabase Storage bucket via Exertly.Api. The avatar itself is
+/// the source of truth — there's no separate database row for it — so its
+/// URL is always resolved by looking up the signed-in user's file(s) in the
+/// bucket. AuthProvider owns the resulting URL as reactive state.
 class AvatarService {
   static const _allowedExtensions = {'jpg', 'jpeg', 'png'};
   static const _maxDimension = 512;
@@ -35,9 +36,9 @@ class AvatarService {
   }
 
   /// Compresses [file], deletes the user's previous avatar file(s) from the
-  /// bucket, and uploads the new one under a fresh file name. Returns the
-  /// new file's public URL. Throws [FormatException] if the file isn't a
-  /// decodable image, and [StateError] if no user is signed in.
+  /// bucket, and uploads the new one under a fresh file name. Returns a
+  /// signed URL for the new file. Throws [FormatException] if the file isn't
+  /// a decodable image, and [StateError] if no user is signed in.
   Future<String> compressAndUpload(XFile file) async {
     if (!isAllowedFile(file)) {
       throw const FormatException('Only JPEG and PNG images are allowed.');
@@ -59,11 +60,17 @@ class AvatarService {
       throw StateError('You must be signed in to upload an avatar.');
     }
 
-    final url = await _storage.getPublicUrl(bucket: SupabaseConfig.avatarsBucket, path: path);
-    if (url.isEmpty) {
+    final url = await _storage.getSignedUrl(bucket: SupabaseConfig.avatarsBucket, path: path);
+    if (url == null || url.isEmpty) {
       throw StateError('Unable to resolve the uploaded avatar\'s URL.');
     }
     return url;
+  }
+
+  /// Returns a signed URL for the current user's avatar, or null if they
+  /// have none or no user is signed in.
+  Future<String?> getAvatarUrl() {
+    return _storage.getLatestUserFileSignedUrl(SupabaseConfig.avatarsBucket);
   }
 
   /// Deletes the current user's avatar file(s) from the bucket.

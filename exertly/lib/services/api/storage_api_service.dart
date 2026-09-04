@@ -103,6 +103,19 @@ class StorageApiService {
     _decode(response);
   }
 
+  /// Returns a signed URL for the current signed-in user's most recently
+  /// uploaded file within [bucket], or null if they have none or no user is
+  /// signed in. File names are `<millisecondsSinceEpoch>.<ext>`, so the
+  /// lexicographically-last name is also the most recent.
+  Future<String?> getLatestUserFileSignedUrl(String bucket, {int expiresInSeconds = 3600}) async {
+    final userId = _userId;
+    if (userId == null) return null;
+    final files = await listUserFiles(bucket);
+    if (files.isEmpty) return null;
+    files.sort();
+    return getSignedUrl(bucket: bucket, path: '$userId/${files.last}', expiresInSeconds: expiresInSeconds);
+  }
+
   /// Returns the public URL for a file in a public bucket (e.g. avatars).
   Future<String> getPublicUrl({required String bucket, required String path}) async {
     final uri = Uri.parse('$_baseUrl${ApiEndpoints.storagePublicUrl(bucket)}').replace(queryParameters: {'path': path});

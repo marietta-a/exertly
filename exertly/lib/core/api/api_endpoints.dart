@@ -45,8 +45,4 @@ class ApiEndpoints {
   static String storageAllFiles(String bucket) => '/api/storage/$bucket/files/all';
   static String storageSignedUrl(String bucket) => '/api/storage/$bucket/signed-url';
   static String storagePublicUrl(String bucket) => '/api/storage/$bucket/public-url';
-
-  // --- User avatars ---
-
-  static String userAvatar(String userId) => '/api/user-avatars/$userId';
 }

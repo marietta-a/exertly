@@ -77,16 +77,26 @@ class DashboardScreen extends StatelessWidget {
             ),
             Padding(
               padding: const EdgeInsets.only(right: 16.0, left: 8.0),
-              child: CircleAvatar(
-                backgroundColor: colorScheme.secondary.withOpacity(0.2),
-                radius: 18,
-                child: Text(
-                  provider.resumeName.isNotEmpty ? provider.resumeName[0] : 'U',
-                  style: TextStyle(
-                    color: colorScheme.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+              child: Builder(
+                builder: (context) {
+                  final avatarUrl = Provider.of<AuthProvider>(context).avatarUrl;
+                  return CircleAvatar(
+                    backgroundColor: colorScheme.secondary.withOpacity(0.2),
+                    radius: 18,
+                    backgroundImage: avatarUrl != null && avatarUrl.isNotEmpty
+                        ? NetworkImage(avatarUrl)
+                        : null,
+                    child: avatarUrl != null && avatarUrl.isNotEmpty
+                        ? null
+                        : Text(
+                            provider.resumeName.isNotEmpty ? provider.resumeName[0] : 'U',
+                            style: TextStyle(
+                              color: colorScheme.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                  );
+                },
               ),
             ),
           ] else ...[

@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../services/api/user_avatar_api_service.dart';
 import '../services/supabase/avatar_service.dart';
 import '../services/supabase/supabase_config.dart';
 
@@ -12,19 +11,18 @@ import '../services/supabase/supabase_config.dart';
 /// the Supabase dashboard, those specific calls will reach Supabase but the
 /// provider redirect itself will fail server-side.
 ///
-/// Also owns the signed-in user's avatar as reactive state, backed by
-/// Exertly.Api's `/api/user-avatars` endpoints and the `avatars` storage
-/// bucket (see [UserAvatarApiService] and [AvatarService]).
+/// Also owns the signed-in user's avatar as reactive state, backed directly
+/// by the `avatars` storage bucket — there's no separate database row for it,
+/// so the URL is always resolved from the user's file(s) in the bucket (see
+/// [AvatarService]).
 class AuthProvider extends ChangeNotifier {
   final SupabaseClient _client;
   final AvatarService _avatarService;
-  final UserAvatarApiService _userAvatarApi;
   late final StreamSubscription<AuthState> _authSub;
 
-  AuthProvider({SupabaseClient? client, AvatarService? avatarService, UserAvatarApiService? userAvatarApi})
+  AuthProvider({SupabaseClient? client, AvatarService? avatarService})
       : _client = client ?? Supabase.instance.client,
-        _avatarService = avatarService ?? AvatarService(),
-        _userAvatarApi = userAvatarApi ?? UserAvatarApiService() {
+        _avatarService = avatarService ?? AvatarService() {
     _authSub = _client.auth.onAuthStateChange.listen((_) {
       notifyListeners();
       _refreshAvatarUrl();
@@ -42,7 +40,8 @@ class AuthProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
-  /// Reloads the signed-in user's avatar URL via [UserAvatarApiService].
+  /// Reloads the signed-in user's avatar URL via [AvatarService], which
+  /// resolves it directly from the `avatars` storage bucket.
   Future<void> _refreshAvatarUrl() async {
     final userId = _client.auth.currentUser?.id;
     if (userId == null) {
@@ -53,8 +52,7 @@ class AuthProvider extends ChangeNotifier {
       return;
     }
     try {
-      final avatar = await _userAvatarApi.getAvatar();
-      _avatarUrl = avatar?.avatarUrl;
+      _avatarUrl = await _avatarService.getAvatarUrl();
     } catch (_) {
       // Keep whatever avatar is already cached if the fetch fails.
     }
@@ -167,8 +165,9 @@ class AuthProvider extends ChangeNotifier {
 
   
 
-  /// Persists the uploaded avatar's public URL via [UserAvatarApiService]
-  /// (insert or replace, keyed by user id).
+  /// Records the newly-uploaded avatar's signed URL as the current one. The
+  /// file itself was already persisted to the storage bucket by
+  /// [AvatarService.compressAndUpload].
   Future<bool> updateAvatarUrl(String url) async {
     final userId = _client.auth.currentUser?.id;
     if (userId == null) {
@@ -176,24 +175,17 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
       return false;
     }
-    try {
-      await _userAvatarApi.upsertAvatar(url);
-      notifyListeners();
-      return true;
-    } catch (e) {
-      _errorMessage = 'Unable to save the new profile photo.';
-      notifyListeners();
-      return false;
-    }
+    _avatarUrl = url;
+    notifyListeners();
+    return true;
   }
 
-  /// Deletes the user's avatar file(s) from storage and its avatar row.
+  /// Deletes the user's avatar file(s) from storage.
   Future<bool> deleteAvatar() async {
     final userId = _client.auth.currentUser?.id;
     if (userId == null) return false;
     try {
       await _avatarService.deleteStoredUserFiles();
-      await _userAvatarApi.deleteAvatar();
       _avatarUrl = null;
       notifyListeners();
       return true;
