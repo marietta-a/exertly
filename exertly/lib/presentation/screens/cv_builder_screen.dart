@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../domain/models/models.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/dashboard_provider.dart';
 import '../../services/cv_exporter/cv_exporter.dart';
+import '../../services/supabase/resume_file_service.dart';
+import '../widgets/auth_bottom_sheet.dart';
 
 class CvBuilderScreen extends StatefulWidget {
   const CvBuilderScreen({super.key});
@@ -42,6 +46,11 @@ class _CvBuilderScreenState extends State<CvBuilderScreen> {
 
   bool _controllersSynced = false;
 
+  final _resumeFileService = ResumeFileService();
+  String? _storedResumeUrl;
+  bool _isLoadingStoredResume = true;
+  bool _isUploadingResume = false;
+
   @override
   void initState() {
     super.initState();
@@ -50,6 +59,91 @@ class _CvBuilderScreenState extends State<CvBuilderScreen> {
     _emailController = TextEditingController();
     _phoneController = TextEditingController();
     _summaryController = TextEditingController();
+    _loadStoredResume();
+  }
+
+  Future<void> _loadStoredResume() async {
+    try {
+      final url = await _resumeFileService.getStoredResumeUrl();
+      if (!mounted) return;
+      setState(() {
+        _storedResumeUrl = url;
+        _isLoadingStoredResume = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _isLoadingStoredResume = false);
+    }
+  }
+
+  /// Renders the current CV Builder data to PDF and uploads it to the
+  /// `resumes` bucket, replacing any previously stored resume.
+  Future<void> _generateAndUploadResume() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    if (!authProvider.isAuthenticated) {
+      AuthBottomSheet.show(
+        context,
+        title: 'Authentication Required',
+        actionText: 'Unlock Resume Upload',
+        onSuccess: _generateAndUploadResume,
+      );
+      return;
+    }
+
+    final colorScheme = Theme.of(context).colorScheme;
+    final provider = Provider.of<DashboardProvider>(context, listen: false);
+
+    setState(() => _isUploadingResume = true);
+    try {
+      final url = await _resumeFileService.generateAndUpload(provider, colorScheme.primary, colorScheme.secondary);
+      if (!mounted) return;
+      setState(() {
+        _storedResumeUrl = url;
+        _isUploadingResume = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Resume compiled and uploaded.'), behavior: SnackBarBehavior.floating),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _isUploadingResume = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to upload resume. Please try again.'), behavior: SnackBarBehavior.floating),
+      );
+    }
+  }
+
+  Future<void> _removeStoredResume() async {
+    setState(() => _isUploadingResume = true);
+    try {
+      await _resumeFileService.deleteStoredResume();
+      if (!mounted) return;
+      setState(() {
+        _storedResumeUrl = null;
+        _isUploadingResume = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Resume removed.'), behavior: SnackBarBehavior.floating),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _isUploadingResume = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to remove resume.'), behavior: SnackBarBehavior.floating),
+      );
+    }
+  }
+
+  Future<void> _openStoredResume() async {
+    final url = _storedResumeUrl;
+    if (url == null) return;
+    final uri = Uri.tryParse(url);
+    if (uri == null || !await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not open the resume file.'), behavior: SnackBarBehavior.floating),
+      );
+    }
   }
 
   void _syncControllersFromProvider(DashboardProvider provider) {
@@ -312,6 +406,8 @@ class _CvBuilderScreenState extends State<CvBuilderScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    _buildUploadedResumeCard(context, colorScheme),
+                    const SizedBox(height: 32),
                     Text(
                       'Choose Your Design Template',
                       style: theme.textTheme.titleLarge,
@@ -1085,6 +1181,109 @@ class _CvBuilderScreenState extends State<CvBuilderScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildUploadedResumeCard(BuildContext context, ColorScheme colorScheme) {
+    final theme = Theme.of(context);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: colorScheme.primary.withOpacity(0.15)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.upload_file_rounded, color: colorScheme.primary),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Cloud Resume',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.primary,
+                      ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Compile your CV Builder details into a PDF and store it in the cloud, so you always have an up-to-date resume ready to share.',
+            style: TextStyle(fontSize: 12, color: Color(0xFF64748B), height: 1.4),
+          ),
+          const SizedBox(height: 16),
+          if (_isLoadingStoredResume)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            )
+          else if (_storedResumeUrl != null) ...[
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: theme.scaffoldBackgroundColor,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.description_rounded, color: colorScheme.secondary, size: 20),
+                  const SizedBox(width: 10),
+                  const Expanded(
+                    child: Text(
+                      'resume.pdf',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF1E293B)),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.open_in_new_rounded, size: 18),
+                    tooltip: 'View resume',
+                    color: colorScheme.primary,
+                    onPressed: _isUploadingResume ? null : _openStoredResume,
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline_rounded, size: 18),
+                    tooltip: 'Remove resume',
+                    color: Colors.redAccent,
+                    onPressed: _isUploadingResume ? null : _removeStoredResume,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: _isUploadingResume ? null : _generateAndUploadResume,
+              icon: _isUploadingResume
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.cloud_upload_rounded, size: 18),
+              label: Text(_storedResumeUrl != null ? 'Regenerate & Upload' : 'Generate & Upload Resume'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: colorScheme.secondary,
+                side: BorderSide(color: colorScheme.secondary.withOpacity(0.4)),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

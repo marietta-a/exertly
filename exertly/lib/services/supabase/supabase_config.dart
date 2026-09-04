@@ -17,4 +17,10 @@ class SupabaseConfig {
   /// dashboard with `image/jpeg`, `image/png` and `image/jpg` as the bucket's
   /// allowed MIME types.
   static const String avatarsBucket = 'avatars';
+
+  /// Storage bucket for user-uploaded resume files. Must be created in the
+  /// Supabase dashboard with `application/pdf`, `application/msword` and
+  /// `application/vnd.openxmlformats-officedocument.wordprocessingml.document`
+  /// as the bucket's allowed MIME types.
+  static const String resumesBucket = 'resumes';
 }

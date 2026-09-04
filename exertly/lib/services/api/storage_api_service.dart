@@ -116,6 +116,18 @@ class StorageApiService {
     return getSignedUrl(bucket: bucket, path: '$userId/${files.last}', expiresInSeconds: expiresInSeconds);
   }
 
+  /// Returns a signed URL for a specific file name within [bucket] belonging
+  /// to the current signed-in user, or null if that file doesn't exist yet
+  /// or no user is signed in. Useful for buckets that store a single
+  /// canonical file per user at a known name (e.g. `resume.pdf`).
+  Future<String?> getUserFileSignedUrl(String bucket, String fileName, {int expiresInSeconds = 3600}) async {
+    final userId = _userId;
+    if (userId == null) return null;
+    final files = await listUserFiles(bucket);
+    if (!files.contains(fileName)) return null;
+    return getSignedUrl(bucket: bucket, path: '$userId/$fileName', expiresInSeconds: expiresInSeconds);
+  }
+
   /// Returns the public URL for a file in a public bucket (e.g. avatars).
   Future<String> getPublicUrl({required String bucket, required String path}) async {
     final uri = Uri.parse('$_baseUrl${ApiEndpoints.storagePublicUrl(bucket)}').replace(queryParameters: {'path': path});
