@@ -143,7 +143,7 @@ class DashboardProvider extends ChangeNotifier {
         ..clear()
         ..addAll(skills.cast<String>());
     }
-    _selectedTemplateIndex = profile['selectedTemplateIndex'] as int? ?? _selectedTemplateIndex;
+    _selectedTemplateIndex = profile['selected_template_index'] as int? ?? _selectedTemplateIndex;
   }
 
   // --- Actions ---

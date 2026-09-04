@@ -5,7 +5,10 @@ class JobListing {
   final String location;
   final String logoText; // Simple textual initials for placeholder logos
   final String salaryRange;
-  final String type;
+  final String employmentType; // 'Full-time', 'Part-time', 'Contract', 'Internship'
+  final String workArrangement; // 'Remote Only', 'Onsite', 'Hybrid'
+  final String datePosted;
+  final bool sponsorshipAvailable;
   final List<String> tags;
   final String details;
   final String postingLink;
@@ -17,7 +20,10 @@ class JobListing {
     required this.location,
     required this.logoText,
     required this.salaryRange,
-    required this.type,
+    required this.employmentType,
+    this.workArrangement = '',
+    this.datePosted = '',
+    this.sponsorshipAvailable = false,
     required this.tags,
     this.details = '',
     this.postingLink = '',
@@ -29,12 +35,15 @@ class JobListing {
       title: json['title'] as String,
       company: json['company'] as String,
       location: json['location'] as String,
-      logoText: json['logoText'] as String,
-      salaryRange: json['salaryRange'] as String,
-      type: json['type'] as String,
+      logoText: json['logo_text'] as String,
+      salaryRange: json['salary_range'] as String,
+      employmentType: json['employment_type'] as String,
+      workArrangement: json['work_arrangement'] as String? ?? '',
+      datePosted: json['date_posted'] as String? ?? '',
+      sponsorshipAvailable: json['sponsorship_available'] as bool? ?? false,
       tags: (json['tags'] as List<dynamic>? ?? []).cast<String>(),
       details: json['details'] as String? ?? '',
-      postingLink: json['postingLink'] as String? ?? '',
+      postingLink: json['posting_link'] as String? ?? '',
     );
   }
 }
@@ -46,6 +55,12 @@ class Scholarship {
   final String amount;
   final String deadline;
   final String category;
+  final String location;
+  final String datePosted;
+  final String type; // 'Online Studies', 'Certification Program', 'On Campus'
+  final String degreeType; // 'Undergraduate', 'Master's', 'PhD / Research', 'Postdoctoral'
+  final List<String> eligibilityCriteria;
+  final List<String> eligibleCountries;
   final String details;
   final String postingLink;
 
@@ -56,6 +71,12 @@ class Scholarship {
     required this.amount,
     required this.deadline,
     required this.category,
+    this.location = '',
+    this.datePosted = '',
+    this.type = '',
+    this.degreeType = '',
+    this.eligibilityCriteria = const [],
+    this.eligibleCountries = const [],
     this.details = '',
     this.postingLink = '',
   });
@@ -68,8 +89,14 @@ class Scholarship {
       amount: json['amount'] as String,
       deadline: json['deadline'] as String,
       category: json['category'] as String,
+      location: json['location'] as String? ?? '',
+      datePosted: json['date_posted'] as String? ?? '',
+      type: json['type'] as String? ?? '',
+      degreeType: json['degree_type'] as String? ?? '',
+      eligibilityCriteria: (json['eligibility_criteria'] as List<dynamic>? ?? []).cast<String>(),
+      eligibleCountries: (json['eligible_countries'] as List<dynamic>? ?? []).cast<String>(),
       details: json['details'] as String? ?? '',
-      postingLink: json['postingLink'] as String? ?? '',
+      postingLink: json['posting_link'] as String? ?? '',
     );
   }
 }
@@ -95,7 +122,7 @@ class ResumeTemplate {
       name: json['name'] as String,
       description: json['description'] as String,
       complexity: json['complexity'] as String,
-      previewText: json['previewText'] as String,
+      previewText: json['preview_text'] as String,
     );
   }
 }

@@ -285,7 +285,19 @@ class _ScholarshipFinderScreenState extends State<ScholarshipFinderScreen> {
                                   const SizedBox(width: 8),
                                   // Details Button
                                   OutlinedButton(
-                                    onPressed: () => _showDetailsDialog(context, scholarship),
+                                    onPressed: () {
+                                      final auth = Provider.of<AuthProvider>(context, listen: false);
+                                      if (auth.isAuthenticated) {
+                                        _showDetailsDialog(context, scholarship);
+                                      } else {
+                                        AuthBottomSheet.show(
+                                          context,
+                                          title: 'Authentication Required',
+                                          actionText: 'Unlock Details',
+                                          onSuccess: () => _showDetailsDialog(context, scholarship),
+                                        );
+                                      }
+                                    },
                                     style: OutlinedButton.styleFrom(
                                       foregroundColor: colorScheme.primary,
                                       side: BorderSide(color: colorScheme.primary.withOpacity(0.3)),
@@ -344,6 +356,22 @@ class _ScholarshipFinderScreenState extends State<ScholarshipFinderScreen> {
     );
   }
 
+  Widget _buildDetailRow(String label, String value) {
+    if (value.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: RichText(
+        text: TextSpan(
+          style: const TextStyle(fontSize: 12.5, color: Color(0xFF334155), height: 1.4),
+          children: [
+            TextSpan(text: '$label: ', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
+            TextSpan(text: value),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _openPostingLink(BuildContext context, String url) async {
     final uri = Uri.tryParse(url);
     if (uri == null || !await launchUrl(uri, mode: LaunchMode.externalApplication)) {
@@ -386,7 +414,14 @@ class _ScholarshipFinderScreenState extends State<ScholarshipFinderScreen> {
                     'Deadline: ${scholarship.deadline}',
                     style: const TextStyle(color: Color(0xFF64748B), fontSize: 12, fontWeight: FontWeight.w600),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
+                  _buildDetailRow('Type', scholarship.type),
+                  _buildDetailRow('Degree Type', scholarship.degreeType),
+                  _buildDetailRow('Location', scholarship.location),
+                  _buildDetailRow('Date Posted', scholarship.datePosted),
+                  _buildDetailRow('Eligible Countries', scholarship.eligibleCountries.join(', ')),
+                  _buildDetailRow('Eligibility Criteria', scholarship.eligibilityCriteria.join('; ')),
+                  const SizedBox(height: 8),
                   Text(
                     scholarship.details.isNotEmpty
                         ? scholarship.details

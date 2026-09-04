@@ -236,7 +236,7 @@ class _JobOpportunitiesScreenState extends State<JobOpportunitiesScreen> {
                                   const SizedBox(width: 16),
                                   _buildInfoIconText(context, Icons.monetization_on_rounded, job.salaryRange),
                                   const SizedBox(width: 16),
-                                  _buildInfoIconText(context, Icons.access_time_filled_rounded, job.type),
+                                  _buildInfoIconText(context, Icons.access_time_filled_rounded, job.employmentType),
                                 ],
                               ),
                               if (job.details.isNotEmpty) ...[
@@ -278,7 +278,19 @@ class _JobOpportunitiesScreenState extends State<JobOpportunitiesScreen> {
                                   const SizedBox(width: 8),
                                   // Details Button
                                   OutlinedButton(
-                                    onPressed: () => _showDetailsDialog(context, job),
+                                    onPressed: () {
+                                      final auth = Provider.of<AuthProvider>(context, listen: false);
+                                      if (auth.isAuthenticated) {
+                                        _showDetailsDialog(context, job);
+                                      } else {
+                                        AuthBottomSheet.show(
+                                          context,
+                                          title: 'Authentication Required',
+                                          actionText: 'Unlock Details',
+                                          onSuccess: () => _showDetailsDialog(context, job),
+                                        );
+                                      }
+                                    },
                                     style: OutlinedButton.styleFrom(
                                       foregroundColor: colorScheme.primary,
                                       side: BorderSide(color: colorScheme.primary.withOpacity(0.3)),
@@ -335,6 +347,22 @@ class _JobOpportunitiesScreenState extends State<JobOpportunitiesScreen> {
     );
   }
 
+  Widget _buildDetailRow(String label, String value) {
+    if (value.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: RichText(
+        text: TextSpan(
+          style: const TextStyle(fontSize: 12.5, color: Color(0xFF334155), height: 1.4),
+          children: [
+            TextSpan(text: '$label: ', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
+            TextSpan(text: value),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _openPostingLink(BuildContext context, String url) async {
     final uri = Uri.tryParse(url);
     if (uri == null || !await launchUrl(uri, mode: LaunchMode.externalApplication)) {
@@ -372,7 +400,12 @@ class _JobOpportunitiesScreenState extends State<JobOpportunitiesScreen> {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
+                  _buildDetailRow('Employment Type', job.employmentType),
+                  _buildDetailRow('Work Arrangement', job.workArrangement),
+                  _buildDetailRow('Date Posted', job.datePosted),
+                  if (job.sponsorshipAvailable) _buildDetailRow('Visa Sponsorship', 'Available'),
+                  const SizedBox(height: 8),
                   Text(
                     job.details.isNotEmpty ? job.details : 'No further details are available for this role.',
                     style: const TextStyle(fontSize: 13, color: Color(0xFF334155), height: 1.5),
