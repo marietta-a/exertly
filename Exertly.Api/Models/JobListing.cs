@@ -45,6 +45,10 @@ public class JobListing
     [JsonPropertyName("details")]
     public string Details { get; set; } = "";
 
+    // Skills/technologies required for the role
+    [JsonPropertyName("skills_required")]
+    public List<string> SkillsRequired { get; set; } = [];
+
     // External URL to the original job posting
     [JsonPropertyName("posting_link")]
     public string PostingLink { get; set; } = "";
